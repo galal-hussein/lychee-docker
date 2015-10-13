@@ -11,17 +11,15 @@ RUN apt-get update
 RUN apt-get install -yq wget git unzip nginx fontconfig-config fonts-dejavu-core \
     php5-fpm php5-common php5-json php5-cli php5-common php5-mysql\
     php5-gd php5-json php5-mcrypt php5-readline psmisc ssl-cert \
-    ufw php-pear libgd-tools libmcrypt-dev mcrypt mysql-server mysql-client
+    ufw php-pear libgd-tools libmcrypt-dev mcrypt
 
 # ------------------------------------------------------------------------------
-# Configure mysql
-RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
-RUN service mysql start && \
-    mysql -uroot -e "CREATE DATABASE IF NOT EXISTS lychee;" && \
-    mysql -uroot -e "CREATE USER 'lychee'@'localhost' IDENTIFIED BY 'lychee';" && \
-    mysql -uroot -e "GRANT ALL PRIVILEGES ON *.* TO 'lychee'@'localhost' WITH GRANT OPTION;" && \
-    mysql -uroot -e "FLUSH PRIVILEGES;"
-    
+# Configure Database Settings
+ENV LYCHEE_DBHOST=localhost
+ENV LYCHEE_DBUSER=admin
+ENV LYCHEE_PASS="" 
+ENV LYCHEE_DBNAME=lychee
+ENV LYCHEE_TBLPREFIX=""
 # ------------------------------------------------------------------------------
 # Configure php-fpm
 RUN sed -i -e "s/output_buffering\s*=\s*4096/output_buffering = Off/g" /etc/php5/fpm/php.ini
@@ -70,5 +68,10 @@ VOLUME /data
 # Add supervisord conf
 ADD conf/startup.conf /etc/supervisor/conf.d/
 
-# Start supervisor, define default command.
-CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+# ------------------------------------------------------------------------------
+# Add entrypoint script
+COPY docker-entrypoint.sh /entrypoint.sh
+
+# ------------------------------------------------------------------------------
+# Run the entrypoint 
+ENTRYPOINT ["/entrypoint.sh"]

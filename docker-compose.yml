@@ -1,0 +1,23 @@
+db-master:
+  image: tutum/mysql
+  environment:
+      - MYSQL_PASS=somepassword
+      - REPLICATION_MASTER=true
+      - REPLICATION_PASS=replpass
+  volumes:
+      - /var/lib/mysql:/var/lib/mysql
+db-slave:
+  image: tutum/mysql
+  environment:
+      - REPLICATION_SLAVE=true
+  links:
+      - db-master:mysql
+lychee:
+  image: husseingalal/lychee
+  links:
+      - db-master:mysql
+  volumes:
+      - /uploads:/uploads/
+      - /data:/data/
+  ports:
+      - 80:80
