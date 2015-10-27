@@ -1,23 +1,36 @@
 db-master:
-  image: tutum/mysql
+  image: husseingalal/mysql2:5.5
   environment:
       - MYSQL_PASS=somepassword
       - REPLICATION_MASTER=true
       - REPLICATION_PASS=replpass
+  restart: always
+  volume_driver: convoy
   volumes:
-      - /var/lib/mysql:/var/lib/mysql
+      - masterdb-vol:/var/lib/mysql
+  labels:
+    io.rancher.scheduler.affinity:host_label: role=master
 db-slave:
-  image: tutum/mysql
+  image: husseingalal/mysql2:5.5
   environment:
       - REPLICATION_SLAVE=true
   links:
       - db-master:mysql
+  restart: always
+  volume_driver: convoy
+  volumes:
+      - slavedb-vol:/var/lib/mysql
+  labels:
+    io.rancher.scheduler.affinity:host_label: role=slave
 lychee:
   image: husseingalal/lychee
   links:
       - db-master:mysql
   volumes:
-      - /uploads:/uploads/
-      - /data:/data/
+      - /root/Lychee/uploads:/uploads/
+      - /root/Lychee/data:/data/
   ports:
-      - 80:80
+      - 0.0.0.0:80:80
+  restart: always
+  labels:
+    io.rancher.scheduler.affinity:host_label: role=master
